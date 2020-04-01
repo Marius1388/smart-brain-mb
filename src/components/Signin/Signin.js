@@ -47,6 +47,7 @@ class Signin extends React.Component {
           .then(user =>{
             if (user && user.email) {
               this.props.loadUser(user);
+              // console.log("loadin user inside signin "+user.email)
               this.props.onRouteChange('home')
           }
         })

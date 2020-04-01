@@ -6,12 +6,22 @@ class Register extends React.Component {
     this.state = {
       email: '',
       password: '',
-      name: ''
+      name: '',
+      pet:'',
+      age:''
     }
   }
 
   onNameChange = (event) => {
     this.setState({name: event.target.value})
+  }
+
+  onAgeChange = (event) => {
+    this.setState({age: event.target.value})
+  }
+
+  onPetChange = (event) => {
+    this.setState({pet: event.target.value})
   }
 
   onEmailChange = (event) => {
@@ -22,25 +32,56 @@ class Register extends React.Component {
     this.setState({password: event.target.value})
   }
 
-  onSubmitSignIn = () => {
-    // fetch('https://enigmatic-peak-20275.herokuapp.com/register', {
-      fetch('http://localhost:3000/register', {
-      method: 'post',
-      headers: {'Content-Type': 'application/json'},
+  saveAuthTokenInSession = (token) => {
+    window.sessionStorage.setItem('token', token);
+  }
+
+  onSubmitRegister = () => {
+    fetch('http://localhost:3000/register', {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: this.state.email,
         password: this.state.password,
-        name: this.state.name
+        name: this.state.name,
+        pet: this.state.pet,
+        age: this.state.age
       })
     })
       .then(response => response.json())
-      .then(user => {
-        if (user.id) {
-          this.props.loadUser(user)
-          this.props.onRouteChange('home');
+      .then(data => {
+         
+        if (data.userId && data.success === "true") {
+          // console.log("checking data "+data.userId);
+          this.saveAuthTokenInSession(data.token);
+          fetch(`http://localhost:3000/profile/${data.userId}`, {
+            method: "get",
+            headers: {
+              "Content-Type": "application/json",
+              'Authorization': data.token
+            }
+          })
+            .then(resp => resp.json())
+            .then(user => {
+                // console.log("the second log"+user.id)
+              if (user.id ) {
+               this.props.loadUser(user);
+              //  console.log("the user registered is "+user.id);
+               this.props.onRouteChange("home");
+              }
+            });
         }
-      })
-  }
+        else {
+          this.props.onRouteChange("home");
+         }
+      });
+      // .catch(console.log)
+  };
+
+  saveAuthTokenInSession = token => {
+    window.localStorage.setItem("token", token);
+  };
+
 
   render() {
     return (
@@ -79,10 +120,30 @@ class Register extends React.Component {
                   onChange={this.onPasswordChange}
                 />
               </div>
+              <div className="mv3">
+                <label className="db fw6 lh-copy f6" htmlFor="age">Age</label>
+                <input
+                  className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
+                  type="text"
+                  name="age"
+                  id="age"
+                  onChange={this.onAgeChange}
+                />
+              </div> 
+             <div className="mv3">
+                <label className="db fw6 lh-copy f6" htmlFor="pet">Pet</label>
+                <input
+                  className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
+                  type="text"
+                  name="pet"
+                  id="pet"
+                  onChange={this.onPetChange}
+                />
+              </div>
             </fieldset>
             <div className="">
               <input
-                onClick={this.onSubmitSignIn}
+                onClick={this.onSubmitRegister}
                 className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6 dib"
                 type="submit"
                 value="Register"
